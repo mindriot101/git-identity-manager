@@ -4,6 +4,7 @@ use structopt::StructOpt;
 mod identity;
 mod manager;
 
+use crate::identity::Identity;
 use crate::manager::Manager;
 
 #[derive(StructOpt, Debug)]
@@ -20,6 +21,8 @@ enum Opt {
         signing_key: Option<String>,
         #[structopt(short = "S", long, parse(from_os_str))]
         ssh_key: Option<PathBuf>,
+        #[structopt(short, long)]
+        commit: bool,
     },
     #[structopt(help = "List available identities")]
     List,
@@ -31,7 +34,7 @@ enum Opt {
 }
 
 fn main() {
-    let manager = Manager::new().unwrap();
+    let mut manager = Manager::new().unwrap();
 
     match Opt::from_args() {
         Opt::List => {
@@ -39,6 +42,35 @@ fn main() {
             for identity in identities {
                 println!("{}", identity.id);
             }
+        }
+        Opt::Add {
+            id,
+            name,
+            email,
+            signing_key,
+            ssh_key,
+            commit,
+        } => {
+            let identity = Identity {
+                id,
+                name,
+                email,
+                signing_key,
+                ssh_key,
+            };
+
+            manager.add(&identity);
+
+            if !commit {
+                eprintln!("`-c/--commit` argument not specified, not flushing");
+                eprintln!(
+                    "identities that would be written: {:#?}",
+                    manager.list_identities()
+                );
+                return;
+            }
+
+            manager.flush();
         }
         _ => todo!(),
     }

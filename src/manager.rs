@@ -94,6 +94,12 @@ impl Manager {
     pub(crate) fn list_identities(&self) -> &[Identity] {
         self.identities.as_ref()
     }
+
+    /// Flush the changes to disk
+    pub(crate) fn flush(&mut self) {
+        // TODO
+        eprintln!("flushing to disk");
+    }
 }
 
 #[cfg(test)]
