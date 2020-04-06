@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 mod identity;
@@ -8,10 +9,25 @@ use crate::manager::Manager;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "git-identity", about = "Manage git identities")]
 enum Opt {
-    Add,
+    Add {
+        #[structopt(short, long)]
+        id: String,
+        #[structopt(short, long)]
+        name: String,
+        #[structopt(short, long)]
+        email: String,
+        #[structopt(short, long)]
+        signing_key: Option<String>,
+        #[structopt(short = "S", long, parse(from_os_str))]
+        ssh_key: Option<PathBuf>,
+    },
     #[structopt(help = "List available identities")]
     List,
-    Set,
+    Set {
+        identity: String,
+    },
+    Edit,
+    Remove,
 }
 
 fn main() {
