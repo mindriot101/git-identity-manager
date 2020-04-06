@@ -32,13 +32,13 @@ pub(crate) struct Manager {
 
 impl Manager {
     pub(crate) fn new() -> Result<Self> {
-        let global_config_path = Config::find_global().unwrap();
-        let global_config = Config::open(&global_config_path).unwrap();
+        let global_config_path = Config::find_global()?;
+        let global_config = Config::open(&global_config_path)?;
 
         let mut identity_map = HashMap::new();
 
-        for entry in &global_config.entries(Some("user.*")).unwrap() {
-            let entry = entry.unwrap();
+        for entry in &global_config.entries(Some("user.*"))? {
+            let entry = entry?;
             let name = entry.name().unwrap();
             let n_components = name.split(".").count();
             if n_components > 2 {
@@ -87,7 +87,33 @@ impl Manager {
         Ok(Self { identities })
     }
 
+    pub(crate) fn add(&mut self, identity: &Identity) {
+        self.identities.push(identity.clone());
+    }
+
     pub(crate) fn list_identities(&self) -> &[Identity] {
         self.identities.as_ref()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Identity, Manager};
+
+    #[test]
+    fn test_adding_identity() {
+        let mut manager = Manager::new().unwrap();
+
+        let identity = Identity {
+            id: "github.personal".to_string(),
+            name: "A Person".to_string(),
+            email: "test@example.com".to_string(),
+            ..Default::default()
+        };
+
+        manager.add(&identity);
+
+        let identities = manager.list_identities();
+        assert!(identities.contains(&identity));
     }
 }
