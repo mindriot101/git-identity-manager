@@ -1,0 +1,9 @@
+[user "testa"]
+	name = User Name
+	email = email@example.com
+	signingkey = NKA012GKAF
+    sshkey = ~/.ssh/id_rsa_testa
+[user "testb"]
+	name = Another Name
+	email = email2@example.com
+	signingkey = HA82LS2LK0
