@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
 #[derive(Default, Debug, Clone, PartialEq)]
-pub(crate) struct Identity {
-    pub(crate) id: String,
-    pub(crate) name: String,
-    pub(crate) email: String,
-    pub(crate) signing_key: Option<String>,
-    pub(crate) ssh_key: Option<PathBuf>,
+pub struct Identity {
+    pub id: String,
+    pub name: String,
+    pub email: String,
+    pub signing_key: Option<String>,
+    pub ssh_key: Option<PathBuf>,
 }

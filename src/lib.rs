@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-mod identity;
+pub mod identity;
 mod manager;
 
 use crate::identity::Identity;
@@ -18,24 +18,24 @@ enum Opt {
     Set {},
 }
 
-fn main() {
-    let opts = Opt::from_args();
+// fn main() {
+//     let opts = Opt::from_args();
 
-    match opts {
-        Opt::List { file } => {
-            let file = file.unwrap_or(
-                dirs::home_dir()
-                    .expect("getting home directory")
-                    .join(".gitconfig"),
-            );
-            let manager = Manager::read_file(file).expect("reading git config file");
-            for identity in manager.list_identities() {
-                println!("{:?}", identity);
-            }
-        }
-        _ => todo!(),
-    }
-}
+//     match opts {
+//         Opt::List { file } => {
+//             let file = file.unwrap_or(
+//                 dirs::home_dir()
+//                     .expect("getting home directory")
+//                     .join(".gitconfig"),
+//             );
+//             let manager = Manager::read_file(file).expect("reading git config file");
+//             for identity in manager.list_identities() {
+//                 println!("{:?}", identity);
+//             }
+//         }
+//         _ => todo!(),
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
