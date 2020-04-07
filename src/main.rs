@@ -28,7 +28,7 @@ enum Opt {
     Set {
         identity: String,
     },
-    Edit,
+    // TODO: Edit,
     Remove {
         id: String,
         #[structopt(short, long)]
@@ -94,7 +94,5 @@ fn main() {
             let mut manager = Manager::use_file(git_config_file).unwrap();
             manager.use_identity(identity).unwrap();
         }
-
-        _ => todo!(),
     }
 }
