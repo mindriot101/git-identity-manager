@@ -4,7 +4,7 @@ use git2::Config;
 use skim::prelude::*;
 use std::collections::HashSet;
 use std::io::Cursor;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ConfigKey {
@@ -34,15 +34,15 @@ pub(crate) struct Manager {
 }
 
 impl Manager {
-    pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub(crate) fn new(path: Option<PathBuf>) -> Result<Self> {
         let global_config_path = Config::find_global()?;
         let global_config = Config::open(&global_config_path)?;
 
-        let local_config = Config::open(path.as_ref())?;
+        let local_config = path.map(|p| Config::open(&p).unwrap());
 
         Ok(Self {
             global_config,
-            local_config: Some(local_config),
+            local_config,
         })
     }
 
