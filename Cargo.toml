@@ -10,5 +10,5 @@ edition = "2018"
 structopt = "0.3.12"
 anyhow = "1.0.28"
 dirs = "2.0.2"
-git2 = "0.13.1"
+git2 = { version = "0.13.1", features = ["vendored-openssl"] }
 skim = "0.8.1"
