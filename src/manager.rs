@@ -2,7 +2,7 @@ use crate::identity::Identity;
 use anyhow::Result;
 use git2::Config;
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ConfigKey {
@@ -82,9 +82,17 @@ impl Manager {
         S: Into<String>,
     {
         let identity_name = identity_name.into();
-        let identity = self.get(&identity_name);
+        let identity = self.get(&identity_name).unwrap();
 
-        todo!()
+        if let Some(lconfig) = self.local_config.as_mut() {
+            for (key, value) in identity.iter() {
+                lconfig.set_str(&key, &value)?;
+            }
+        } else {
+            unreachable!("no local config set");
+        };
+
+        Ok(())
     }
 
     pub(crate) fn remove(&mut self, id: &str) -> Result<()> {
@@ -113,6 +121,13 @@ impl Manager {
     }
 
     pub(crate) fn list_identities(&self) {
+        let identities = self.get_all();
+        for profile_name in identities {
+            println!("{}", profile_name);
+        }
+    }
+
+    fn get_all(&self) -> Vec<String> {
         let mut set = HashSet::new();
 
         self.identity_keys(|entry| {
@@ -128,13 +143,44 @@ impl Manager {
         })
         .unwrap();
 
-        for profile_name in set {
-            println!("{}", profile_name);
-        }
+        set.drain().collect()
     }
 
     fn get(&self, identity: &str) -> Option<Identity> {
-        todo!()
+        for i in self.get_all() {
+            if i == identity {
+                let mut iobj = Identity::default();
+                iobj.id = identity.to_string();
+
+                // Get the keys
+                iobj.name = self
+                    .global_config
+                    .get_string(&format!("user.{}.name", identity))
+                    .unwrap();
+                iobj.email = self
+                    .global_config
+                    .get_string(&format!("user.{}.email", identity))
+                    .unwrap();
+
+                if let Ok(signing_key) = self
+                    .global_config
+                    .get_string(&format!("user.{}.signingkey", identity))
+                {
+                    iobj.signing_key = Some(signing_key);
+                }
+
+                if let Ok(ssh_key) = self
+                    .global_config
+                    .get_string(&format!("user.{}.sshkey", identity))
+                {
+                    iobj.ssh_key = Some(PathBuf::from(ssh_key));
+                }
+
+                return Some(iobj);
+            }
+        }
+
+        None
     }
 
     fn identity_keys<F>(&self, mut callback: F) -> Result<()>
