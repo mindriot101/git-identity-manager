@@ -28,7 +28,11 @@ enum Opt {
         identity: String,
     },
     Edit,
-    Remove,
+    Remove {
+        id: String,
+        #[structopt(short, long)]
+        force: bool,
+    },
 }
 
 fn main() {
@@ -55,6 +59,15 @@ fn main() {
 
             manager.add(&identity);
         }
+        Opt::Remove { id, force } => {
+            if !force {
+                eprintln!("-f/--force not given, no action will be taken");
+                return;
+            }
+
+            manager.remove(&id).unwrap();
+        }
+
         _ => todo!(),
     }
 }

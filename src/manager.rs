@@ -62,23 +62,61 @@ impl Manager {
         });
     }
 
+    pub(crate) fn remove(&mut self, id: &str) -> Result<()> {
+        let key_stub = format!("user.{}.", id);
+        let mut keys_to_remove = Vec::new();
+        self.identity_keys(|entry| {
+            let name = entry.name().unwrap().to_string();
+
+            if name.starts_with(&key_stub) {
+                // self.config.remove(name)?;
+                keys_to_remove.push(name.clone());
+            }
+
+            Ok(())
+        })?;
+
+        if keys_to_remove.is_empty() {
+            eprintln!("no keys to remove");
+        }
+
+        for key in keys_to_remove {
+            self.config.remove(&key)?;
+        }
+
+        Ok(())
+    }
+
     pub(crate) fn list_identities(&self) {
         let mut set = HashSet::new();
 
-        for entry in &self.config.entries(Some("user.*.*.*")).unwrap() {
-            let entry = entry.unwrap();
+        self.identity_keys(|entry| {
             let parts = entry.name().unwrap().split(".").collect::<Vec<_>>();
             match parts[parts.len() - 1] {
                 "name" | "email" | "signingkey" | "sshkey" => {
                     let tag = parts[1..(parts.len() - 1)].join(".");
                     set.insert(tag);
+                    Ok(())
                 }
-                _ => continue,
+                _ => return Ok(()),
             }
-        }
+        })
+        .unwrap();
 
         for profile_name in set {
             println!("{}", profile_name);
         }
+    }
+
+    fn identity_keys<F>(&self, mut callback: F) -> Result<()>
+    where
+        F: FnMut(git2::ConfigEntry) -> Result<()>,
+    {
+        for entry in &self.config.entries(Some("user.*.*.*")).unwrap() {
+            let entry = entry.unwrap();
+            callback(entry)?;
+        }
+
+        Ok(())
     }
 }
