@@ -32,6 +32,8 @@ enum Opt {
         force: bool,
         #[structopt(long)]
         global: bool,
+        #[structopt(short, long)]
+        identity: Option<String>,
     },
 }
 
@@ -57,7 +59,7 @@ fn find_local_config_file() -> Result<PathBuf> {
 
 fn main() {
     let git_config_file = find_local_config_file().unwrap();
-    let mut manager = Manager::use_file(git_config_file).unwrap();
+    let mut manager = Manager::new(git_config_file).unwrap();
 
     match Opt::from_args() {
         Opt::List => {
@@ -80,14 +82,24 @@ fn main() {
 
             manager.add(&identity);
         }
-        Opt::Remove { force, global } => {
+        Opt::Remove {
+            force,
+            global,
+            identity,
+        } => {
             if !force {
                 eprintln!("-f/--force not given, no action will be taken");
                 return;
             }
 
             if global {
-                todo!()
+                match identity {
+                    Some(i) => manager.remove_from_global(&i).unwrap(),
+                    None => {
+                        eprintln!("identity required when removing global identity");
+                        return;
+                    }
+                }
             } else {
                 manager.remove().unwrap();
             }

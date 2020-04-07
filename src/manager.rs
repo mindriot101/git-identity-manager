@@ -34,17 +34,7 @@ pub(crate) struct Manager {
 }
 
 impl Manager {
-    pub(crate) fn new() -> Result<Self> {
-        let global_config_path = Config::find_global()?;
-        let global_config = Config::open(&global_config_path)?;
-
-        Ok(Self {
-            global_config,
-            local_config: None,
-        })
-    }
-
-    pub(crate) fn use_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+    pub(crate) fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
         let global_config_path = Config::find_global()?;
         let global_config = Config::open(&global_config_path)?;
 
@@ -143,6 +133,24 @@ impl Manager {
             }
             None => unreachable!(),
         }
+    }
+
+    pub(crate) fn remove_from_global(&mut self, identity: &str) -> Result<()> {
+        let keys_to_remove = self
+            .global_config
+            .entries(Some(&format!("user.{}.*", identity)))
+            .unwrap()
+            .map(|c| c.unwrap().name().unwrap().to_string())
+            .collect::<Vec<_>>();
+        if keys_to_remove.is_empty() {
+            eprintln!("No keys to remove");
+            return Ok(());
+        }
+
+        for key in keys_to_remove {
+            self.global_config.remove(&key)?;
+        }
+        Ok(())
     }
 
     pub(crate) fn list_identities(&self) {
