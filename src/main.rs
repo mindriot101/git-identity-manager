@@ -28,9 +28,10 @@ enum Opt {
     Set,
     // TODO: Edit,
     Remove {
-        id: String,
         #[structopt(short, long)]
         force: bool,
+        #[structopt(long)]
+        global: bool,
     },
 }
 
@@ -55,7 +56,8 @@ fn find_local_config_file() -> Result<PathBuf> {
 }
 
 fn main() {
-    let mut manager = Manager::new().unwrap();
+    let git_config_file = find_local_config_file().unwrap();
+    let mut manager = Manager::use_file(git_config_file).unwrap();
 
     match Opt::from_args() {
         Opt::List => {
@@ -78,18 +80,20 @@ fn main() {
 
             manager.add(&identity);
         }
-        Opt::Remove { id, force } => {
+        Opt::Remove { force, global } => {
             if !force {
                 eprintln!("-f/--force not given, no action will be taken");
                 return;
             }
 
-            manager.remove(&id).unwrap();
+            if global {
+                todo!()
+            } else {
+                manager.remove().unwrap();
+            }
         }
 
         Opt::Set => {
-            let git_config_file = find_local_config_file().unwrap();
-            let mut manager = Manager::use_file(git_config_file).unwrap();
             manager.select_identity().unwrap();
         }
     }

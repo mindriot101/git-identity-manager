@@ -121,29 +121,28 @@ impl Manager {
         Ok(())
     }
 
-    pub(crate) fn remove(&mut self, id: &str) -> Result<()> {
-        let key_stub = format!("user.{}.", id);
-        let mut keys_to_remove = Vec::new();
-        self.identity_keys(|entry| {
-            let name = entry.name().unwrap().to_string();
+    pub(crate) fn remove(&mut self) -> Result<()> {
+        match &mut self.local_config {
+            Some(config) => {
+                let keys_to_remove = config
+                    .entries(Some("user.*"))
+                    .unwrap()
+                    .map(|c| c.unwrap().name().unwrap().to_string())
+                    .collect::<Vec<_>>();
 
-            if name.starts_with(&key_stub) {
-                // self.global_config.remove(name)?;
-                keys_to_remove.push(name.clone());
+                if keys_to_remove.is_empty() {
+                    eprintln!("No keys to remove");
+                    return Ok(());
+                }
+
+                for key in keys_to_remove {
+                    config.remove(&key)?;
+                }
+
+                Ok(())
             }
-
-            Ok(())
-        })?;
-
-        if keys_to_remove.is_empty() {
-            eprintln!("no keys to remove");
+            None => unreachable!(),
         }
-
-        for key in keys_to_remove {
-            self.global_config.remove(&key)?;
-        }
-
-        Ok(())
     }
 
     pub(crate) fn list_identities(&self) {
