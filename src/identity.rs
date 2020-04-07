@@ -66,22 +66,10 @@ mod tests {
         assert_eq!(
             keys,
             vec![
-                (
-                    "user.foobar.personal.name".to_string(),
-                    "A User".to_string()
-                ),
-                (
-                    "user.foobar.personal.email".to_string(),
-                    "user@example.com".to_string()
-                ),
-                (
-                    "user.foobar.personal.signingkey".to_string(),
-                    "abc".to_string()
-                ),
-                (
-                    "user.foobar.personal.sshkey".to_string(),
-                    "/a/b/c/id_rsa".to_string()
-                ),
+                ("user.name".to_string(), "A User".to_string()),
+                ("user.email".to_string(), "user@example.com".to_string()),
+                ("user.signingkey".to_string(), "abc".to_string()),
+                ("user.sshkey".to_string(), "/a/b/c/id_rsa".to_string()),
             ]
         );
     }
