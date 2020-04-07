@@ -25,9 +25,7 @@ enum Opt {
     },
     #[structopt(help = "List available identities")]
     List,
-    Set {
-        identity: String,
-    },
+    Set,
     // TODO: Edit,
     Remove {
         id: String,
@@ -89,10 +87,10 @@ fn main() {
             manager.remove(&id).unwrap();
         }
 
-        Opt::Set { identity } => {
+        Opt::Set => {
             let git_config_file = find_local_config_file().unwrap();
             let mut manager = Manager::use_file(git_config_file).unwrap();
-            manager.use_identity(identity).unwrap();
+            manager.select_identity().unwrap();
         }
     }
 }

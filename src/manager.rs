@@ -1,7 +1,9 @@
 use crate::identity::Identity;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use git2::Config;
+use skim::prelude::*;
 use std::collections::HashSet;
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -77,7 +79,31 @@ impl Manager {
         });
     }
 
-    pub(crate) fn use_identity<S>(&mut self, identity_name: S) -> Result<()>
+    /// Use skim to select an identity interactively
+    pub(crate) fn select_identity(&mut self) -> Result<()> {
+        let identity_names = self.get_all();
+        let input_text = identity_names.join("\n");
+
+        let options = SkimOptions::default();
+        let item_reader = SkimItemReader::default();
+        let items = item_reader.of_bufread(Cursor::new(input_text));
+
+        let selected_items = Skim::run_with(&options, Some(items))
+            .map(|out| out.selected_items)
+            .unwrap_or_else(|| Vec::new());
+
+        if selected_items.is_empty() {
+            // Early return, the user did not select anything
+            Ok(())
+        } else if selected_items.len() > 1 {
+            bail!("multiple item selection not supported")
+        } else {
+            let identity = selected_items[0].text();
+            self.use_identity(identity)
+        }
+    }
+
+    fn use_identity<S>(&mut self, identity_name: S) -> Result<()>
     where
         S: Into<String>,
     {
