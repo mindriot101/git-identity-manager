@@ -1,3 +1,4 @@
+use anyhow::{bail, Result};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -35,6 +36,26 @@ enum Opt {
     },
 }
 
+/// Find the local config file
+///
+/// Traverse up the filesystem tree until a `.git` directory is found. Then treat the gitconfig
+/// found  as the local config file.
+fn find_local_config_file() -> Result<PathBuf> {
+    let mut dir = std::env::current_dir()?;
+    loop {
+        let test_git_config = dir.join(".git").join("config");
+        if test_git_config.is_file() {
+            return Ok(test_git_config);
+        }
+
+        if let Some(newpath) = dir.parent() {
+            dir = newpath.to_path_buf();
+        } else {
+            bail!("cannot find .git directory");
+        }
+    }
+}
+
 fn main() {
     let mut manager = Manager::new().unwrap();
 
@@ -66,6 +87,12 @@ fn main() {
             }
 
             manager.remove(&id).unwrap();
+        }
+
+        Opt::Set { identity } => {
+            let git_config_file = find_local_config_file().unwrap();
+            let mut manager = Manager::use_file(git_config_file).unwrap();
+            manager.use_identity(identity).unwrap();
         }
 
         _ => todo!(),
