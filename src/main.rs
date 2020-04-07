@@ -21,8 +21,6 @@ enum Opt {
         signing_key: Option<String>,
         #[structopt(short = "S", long, parse(from_os_str))]
         ssh_key: Option<PathBuf>,
-        #[structopt(short, long)]
-        commit: bool,
     },
     #[structopt(help = "List available identities")]
     List,
@@ -38,10 +36,7 @@ fn main() {
 
     match Opt::from_args() {
         Opt::List => {
-            let identities = manager.list_identities();
-            for identity in identities {
-                println!("{}", identity.id);
-            }
+            manager.list_identities();
         }
         Opt::Add {
             id,
@@ -49,7 +44,6 @@ fn main() {
             email,
             signing_key,
             ssh_key,
-            commit,
         } => {
             let identity = Identity {
                 id,
@@ -60,17 +54,6 @@ fn main() {
             };
 
             manager.add(&identity);
-
-            if !commit {
-                eprintln!("`-c/--commit` argument not specified, not flushing");
-                eprintln!(
-                    "identities that would be written: {:#?}",
-                    manager.list_identities()
-                );
-                return;
-            }
-
-            manager.flush();
         }
         _ => todo!(),
     }

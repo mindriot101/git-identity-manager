@@ -1,8 +1,7 @@
 use crate::identity::Identity;
 use anyhow::Result;
 use git2::Config;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::collections::HashSet;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ConfigKey {
@@ -27,7 +26,7 @@ impl std::str::FromStr for ConfigKey {
 }
 
 pub(crate) struct Manager {
-    identities: Vec<Identity>,
+    config: Config,
 }
 
 impl Manager {
@@ -35,91 +34,51 @@ impl Manager {
         let global_config_path = Config::find_global()?;
         let global_config = Config::open(&global_config_path)?;
 
-        let mut identity_map = HashMap::new();
-
-        for entry in &global_config.entries(Some("user.*"))? {
-            let entry = entry?;
-            let name = entry.name().unwrap();
-            let n_components = name.split(".").count();
-            if n_components > 2 {
-                let identity_name: String = name
-                    .split(".")
-                    .skip(1)
-                    .take_while(|w| {
-                        *w != "name" && *w != "email" && *w != "signingkey" && *w != "sshkey"
-                    })
-                    .collect::<Vec<_>>()
-                    .join(".");
-
-                let value = entry.value().unwrap().to_string();
-                let key = name.split(".").last().unwrap().to_string();
-
-                let e = identity_map.entry(identity_name).or_insert(HashMap::new());
-                e.insert(key.parse::<ConfigKey>().unwrap(), value);
-            }
-        }
-
-        let mut identities = Vec::new();
-
-        for (identity_name, details) in &identity_map {
-            let mut identity = Identity::default();
-            identity.id = identity_name.to_string();
-            for (key, value) in details {
-                match key {
-                    ConfigKey::Name => identity.name = value.to_string(),
-                    ConfigKey::Email => identity.email = value.to_string(),
-                    ConfigKey::SigningKey => {
-                        identity.signing_key = {
-                            if value.is_empty() {
-                                None
-                            } else {
-                                Some(value.to_string())
-                            }
-                        }
-                    }
-                    ConfigKey::SshKey => identity.ssh_key = Some(PathBuf::from(value)),
-                }
-            }
-
-            identities.push(identity.clone());
-        }
-
-        Ok(Self { identities })
+        Ok(Self {
+            config: global_config,
+        })
     }
 
     pub(crate) fn add(&mut self, identity: &Identity) {
-        self.identities.push(identity.clone());
+        self.config
+            .set_str(&format!("user.{id}.name", id = identity.id), &identity.name)
+            .unwrap();
+        self.config
+            .set_str(
+                &format!("user.{id}.email", id = identity.id),
+                &identity.email,
+            )
+            .unwrap();
+        identity.signing_key.as_ref().map(|key| {
+            self.config
+                .set_str(&format!("user.{id}.signingkey", id = identity.id), key)
+                .unwrap()
+        });
+        identity.ssh_key.as_ref().map(|key| {
+            let s = key.as_path().to_str().unwrap();
+            self.config
+                .set_str(&format!("user.{id}.sshkey", id = identity.id), s)
+                .unwrap()
+        });
     }
 
-    pub(crate) fn list_identities(&self) -> &[Identity] {
-        self.identities.as_ref()
-    }
+    pub(crate) fn list_identities(&self) {
+        let mut set = HashSet::new();
 
-    /// Flush the changes to disk
-    pub(crate) fn flush(&mut self) {
-        // TODO
-        eprintln!("flushing to disk");
-    }
-}
+        for entry in &self.config.entries(Some("user.*.*.*")).unwrap() {
+            let entry = entry.unwrap();
+            let parts = entry.name().unwrap().split(".").collect::<Vec<_>>();
+            match parts[parts.len() - 1] {
+                "name" | "email" | "signingkey" | "sshkey" => {
+                    let tag = parts[1..(parts.len() - 1)].join(".");
+                    set.insert(tag);
+                }
+                _ => continue,
+            }
+        }
 
-#[cfg(test)]
-mod tests {
-    use super::{Identity, Manager};
-
-    #[test]
-    fn test_adding_identity() {
-        let mut manager = Manager::new().unwrap();
-
-        let identity = Identity {
-            id: "github.personal".to_string(),
-            name: "A Person".to_string(),
-            email: "test@example.com".to_string(),
-            ..Default::default()
-        };
-
-        manager.add(&identity);
-
-        let identities = manager.list_identities();
-        assert!(identities.contains(&identity));
+        for profile_name in set {
+            println!("{}", profile_name);
+        }
     }
 }
