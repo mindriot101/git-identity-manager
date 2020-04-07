@@ -141,6 +141,7 @@ impl Manager {
             .entries(Some(&format!("user.{}.*", identity)))
             .unwrap()
             .map(|c| c.unwrap().name().unwrap().to_string())
+            .filter(Self::should_remove_key)
             .collect::<Vec<_>>();
         if keys_to_remove.is_empty() {
             eprintln!("No keys to remove");
@@ -151,6 +152,13 @@ impl Manager {
             self.global_config.remove(&key)?;
         }
         Ok(())
+    }
+
+    /// Check for whether the key should be included when deleting
+    ///
+    /// We do not want some keys to be exported, for example user.useConfigOnly
+    fn should_remove_key(key: &String) -> bool {
+        !key.to_lowercase().ends_with("useconfigonly")
     }
 
     pub(crate) fn list_identities(&self) {
