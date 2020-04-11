@@ -35,6 +35,7 @@ enum Opt {
         #[structopt(short, long)]
         identity: Option<String>,
     },
+    Current,
 }
 
 /// Find the local config file
@@ -108,5 +109,10 @@ fn main() {
         Opt::Set => {
             manager.select_identity().unwrap();
         }
+
+        Opt::Current => match manager.current_identity() {
+            Some((name, email)) => println!("{} ({})", name, email),
+            None => println!("none set"),
+        },
     }
 }

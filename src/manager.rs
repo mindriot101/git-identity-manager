@@ -168,6 +168,24 @@ impl Manager {
         }
     }
 
+    pub(crate) fn current_identity(&self) -> Option<(String, String)> {
+        if let Some(config) = &self.local_config {
+            return config
+                .get_entry("user.name")
+                .and_then(|name_entry| {
+                    let name = name_entry.value().unwrap().to_string();
+                    config.get_entry("user.email").map(|email_entry| {
+                        let email = email_entry.value().unwrap().to_string();
+                        (name, email)
+                    })
+                })
+                .map_err(|e| eprintln!("got error: {:?}", e))
+                .ok();
+        }
+
+        None
+    }
+
     fn get_all(&self) -> Vec<String> {
         let mut set = HashSet::new();
 
