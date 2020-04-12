@@ -1,1 +1,1 @@
-{"version":1,"ops":[{"type":4,"author":{"id":"bbc3d5be1ba4226588ba76c5beeff5378b101654"},"timestamp":1586653712,"status":2}]}
+{"version":1,"ops":[{"type":8,"author":{"id":"bbc3d5be1ba4226588ba76c5beeff5378b101654"},"timestamp":1586653720,"target":"ce7e71bcf818e6eb469f72338b8041c25b735d34aa970ccb7ab384d03f8eaa99","new_metadata":{"github-id":"MDU6SXNzdWU1OTgzODI2NDA=","github-url":"https://github.com/mindriot101/git-identity-manager/issues/5"}}]}
