@@ -1,5 +1,7 @@
 use anyhow::Result;
+use std::io::{self, Write};
 use std::path::PathBuf;
+use structopt::clap::Shell;
 use structopt::StructOpt;
 
 mod identity;
@@ -36,6 +38,10 @@ enum Opt {
         identity: Option<String>,
     },
     Current,
+    GenCompletion {
+        #[structopt(short, long)]
+        shell: Shell,
+    },
 }
 
 /// Find the local config file
@@ -114,5 +120,15 @@ fn main() {
             Some((name, email)) => println!("{} ({})", name, email),
             None => println!("none set"),
         },
+
+        Opt::GenCompletion { shell } => {
+            let mut app = Opt::clap();
+            let mut result = Vec::new();
+
+            app.gen_completions_to("git-identity", shell, &mut result);
+
+            // Print to stdout
+            io::stdout().write_all(&result).unwrap();
+        }
     }
 }
