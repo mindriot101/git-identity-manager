@@ -1,1 +1,1 @@
-{"version":1,"ops":[{"type":1,"author":{"id":"bbc3d5be1ba4226588ba76c5beeff5378b101654"},"timestamp":1586654100,"title":"Improve the help text","message":"Currently when autocompleting the available commands, the help text is mostly empty.","files":null}]}
+{"version":1,"ops":[{"type":8,"author":{"id":"bbc3d5be1ba4226588ba76c5beeff5378b101654"},"timestamp":1586654109,"target":"a4646e18e74909df2f93f681fff785c3d0fa188b4c5ce845500a16d217758c74","new_metadata":{"github-id":"MDU6SXNzdWU1OTgzODQ4NzY=","github-url":"https://github.com/mindriot101/git-identity-manager/issues/7"}}]}
