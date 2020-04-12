@@ -44,6 +44,13 @@ identity.
 
 An identity can be removed using `git identity remove`.
 
+## Generating shell completion
+
+The command `git identity gen-completion -s <shell>` can be used to generate the
+correct auto-completion for your shell. It prints the completion information to
+stdout, so consult your shell's documentation for information on how to
+integrate this.
+
 ## Tools used
 
 * `rust`
