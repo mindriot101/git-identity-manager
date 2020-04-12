@@ -1,0 +1,1 @@
+{"version":1,"ops":[{"type":1,"author":{"id":"bbc3d5be1ba4226588ba76c5beeff5378b101654"},"timestamp":1586687294,"title":"Automatically generate precompiled binaries","message":"We are embedding openssl so we should be able to create binaries (at least for\nwindows and macos).","files":null}]}
