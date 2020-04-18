@@ -13,33 +13,47 @@ use crate::manager::Manager;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "git-identity", about = "Manage git identities")]
 enum Opt {
+    /// Add an identity to the global store
     Add {
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Name of the identity")]
         id: String,
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Your name")]
         name: String,
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Your email")]
         email: String,
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Optional gpg signing key id")]
         signing_key: Option<String>,
-        #[structopt(short = "S", long, parse(from_os_str))]
+        #[structopt(
+            short = "S",
+            long,
+            parse(from_os_str),
+            help = "Optional path to SSH key"
+        )]
         ssh_key: Option<PathBuf>,
     },
-    #[structopt(help = "List available identities")]
+    /// List available identities
     List,
+    /// Set the identity for the current repository
     Set,
     // TODO: Edit,
+    /// Remove an identity from this repository or the global list
     Remove {
-        #[structopt(short, long)]
+        #[structopt(
+            short,
+            long,
+            help = "Act out the removal (nothing happens without this key)"
+        )]
         force: bool,
-        #[structopt(long)]
+        #[structopt(long, help = "Remove from global identity list")]
         global: bool,
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Identity name if required")]
         identity: Option<String>,
     },
+    /// Get the currently active identity for this repository
     Current,
+    /// Generate shell completion
     GenCompletion {
-        #[structopt(short, long)]
+        #[structopt(short, long, help = "Shell to generate completion for")]
         shell: Shell,
     },
 }
