@@ -94,8 +94,10 @@ impl Manager {
     }
 
     fn ensure_private_gitconfig_present(&mut self, path: &Path) -> Result<()> {
-        if let None = self.global_config.get_entry("include.path") {
-            todo!()
+        if self.global_config.get_entry("include.path").is_err() {
+            // We don't have the key so add it in
+            self.global_config
+                .set_str("include.path", path.to_str().unwrap())?;
         }
 
         Ok(())
