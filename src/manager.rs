@@ -3,8 +3,9 @@ use anyhow::{bail, Result};
 use git2::Config;
 use skim::prelude::*;
 use std::collections::HashSet;
+use std::fs::File;
 use std::io::Cursor;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ConfigKey {
@@ -46,27 +47,73 @@ impl Manager {
         })
     }
 
-    pub(crate) fn add(&mut self, identity: &Identity) {
-        self.global_config
-            .set_str(&format!("user.{id}.name", id = identity.id), &identity.name)
-            .unwrap();
-        self.global_config
-            .set_str(
+    pub(crate) fn add(&mut self, identity: &Identity, private: bool) -> Result<()> {
+        if private {
+            if let Some(private_gitconfig_filename) = dirs::home_dir() {
+                self.ensure_private_gitconfig_present(&private_gitconfig_filename)?;
+                let mut config = Config::open(&private_gitconfig_filename)?;
+                config.set_str(&format!("user.{id}.name", id = identity.id), &identity.name)?;
+                config.set_str(
+                    &format!("user.{id}.email", id = identity.id),
+                    &identity.email,
+                )?;
+                identity.signing_key.as_ref().map(|key| {
+                    config
+                        .set_str(&format!("user.{id}.signingkey", id = identity.id), key)
+                        .unwrap();
+                });
+                identity.ssh_key.as_ref().map(|key| {
+                    let s = key.as_path().to_str().unwrap();
+                    config
+                        .set_str(&format!("user.{id}.sshkey", id = identity.id), s)
+                        .unwrap();
+                });
+            } else {
+                bail!("private mode requested but cannot get user home directory");
+            }
+        } else {
+            self.global_config
+                .set_str(&format!("user.{id}.name", id = identity.id), &identity.name)?;
+            self.global_config.set_str(
                 &format!("user.{id}.email", id = identity.id),
                 &identity.email,
-            )
-            .unwrap();
-        identity.signing_key.as_ref().map(|key| {
+            )?;
+            identity.signing_key.as_ref().map(|key| {
+                self.global_config
+                    .set_str(&format!("user.{id}.signingkey", id = identity.id), key)
+                    .unwrap();
+            });
+            identity.ssh_key.as_ref().map(|key| {
+                let s = key.as_path().to_str().unwrap();
+                self.global_config
+                    .set_str(&format!("user.{id}.sshkey", id = identity.id), s)
+                    .unwrap();
+            });
+        }
+
+        Ok(())
+    }
+
+    fn ensure_private_gitconfig_present(&mut self, path: &Path) -> Result<()> {
+        let path_key = "include.path";
+
+        if self.global_config.get_entry(path_key).is_err() {
+            // We don't have the key so add it in
             self.global_config
-                .set_str(&format!("user.{id}.signingkey", id = identity.id), key)
-                .unwrap()
-        });
-        identity.ssh_key.as_ref().map(|key| {
-            let s = key.as_path().to_str().unwrap();
-            self.global_config
-                .set_str(&format!("user.{id}.sshkey", id = identity.id), s)
-                .unwrap()
-        });
+                .set_str(path_key, path.to_str().unwrap())?;
+        }
+
+        // Unwrap is safe as we know the key exists
+        let entry = self.global_config.get_entry(path_key).unwrap();
+        let entry_value = &entry.value().unwrap();
+        let local_file = Path::new(entry_value);
+
+        if !local_file.exists() {
+            // Create an empty file
+            let _ = File::create(local_file)?;
+        }
+
+        Ok(())
     }
 
     /// Use skim to select an identity interactively

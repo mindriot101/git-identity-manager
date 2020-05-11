@@ -30,6 +30,8 @@ enum Opt {
             help = "Optional path to SSH key"
         )]
         ssh_key: Option<PathBuf>,
+        #[structopt(short, long, help = "Private mode (add identity to private file)0")]
+        private: bool,
     },
     /// List available identities
     List,
@@ -92,6 +94,7 @@ fn main() {
             email,
             signing_key,
             ssh_key,
+            private,
         } => {
             let identity = Identity {
                 id,
@@ -101,7 +104,7 @@ fn main() {
                 ssh_key,
             };
 
-            manager.add(&identity);
+            manager.add(&identity, private).unwrap();
         }
         Opt::Remove {
             force,
