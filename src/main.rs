@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use structopt::clap::Shell;
 use structopt::StructOpt;
 
+mod config;
 mod identity;
 mod manager;
 

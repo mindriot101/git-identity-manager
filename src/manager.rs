@@ -6,6 +6,8 @@ use std::collections::HashSet;
 use std::io::Cursor;
 use std::path::PathBuf;
 
+use crate::config::{Entry, GitConfig};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 enum ConfigKey {
     Name,
@@ -29,16 +31,20 @@ impl std::str::FromStr for ConfigKey {
 }
 
 pub(crate) struct Manager {
-    global_config: Config,
-    local_config: Option<Config>,
+    global_config: Box<dyn GitConfig>,
+    local_config: Option<Box<dyn GitConfig>>,
 }
 
 impl Manager {
     pub(crate) fn new(path: Option<PathBuf>) -> Result<Self> {
         let global_config_path = Config::find_global()?;
-        let global_config = Config::open(&global_config_path)?;
+        let global_config = Box::new(Config::open(&global_config_path)?);
 
-        let local_config = path.map(|p| Config::open(&p).unwrap());
+        // let local_config = path.map(|p| Box::new(Config::open(&p).unwrap()));
+        let local_config: Option<Box<dyn GitConfig>> = match path {
+            Some(p) => Some(Box::new(Config::open(&p)?)),
+            None => None,
+        };
 
         Ok(Self {
             global_config,
@@ -244,9 +250,9 @@ impl Manager {
 
     fn identity_keys<F>(&self, mut callback: F) -> Result<()>
     where
-        F: FnMut(git2::ConfigEntry) -> Result<()>,
+        F: FnMut(Box<dyn Entry>) -> Result<()>,
     {
-        for entry in &self.global_config.entries(Some("user.*.*.*")).unwrap() {
+        for entry in self.global_config.entries(Some("user.*.*.*")).unwrap() {
             let entry = entry.unwrap();
             callback(entry)?;
         }
