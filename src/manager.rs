@@ -94,7 +94,11 @@ impl Manager {
     }
 
     fn ensure_private_gitconfig_present(&mut self, path: &Path) -> Result<()> {
-        todo!()
+        if let None = self.global_config.get_entry("include.path") {
+            todo!()
+        }
+
+        Ok(())
     }
 
     /// Use skim to select an identity interactively
