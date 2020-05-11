@@ -30,7 +30,7 @@ enum Opt {
             help = "Optional path to SSH key"
         )]
         ssh_key: Option<PathBuf>,
-        #[structopt(short, long, help = "Private mode (add identity to private file")]
+        #[structopt(short, long, help = "Private mode (add identity to private file)0")]
         private: bool,
     },
     /// List available identities
