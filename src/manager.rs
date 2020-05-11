@@ -3,6 +3,7 @@ use anyhow::{bail, Result};
 use git2::Config;
 use skim::prelude::*;
 use std::collections::HashSet;
+use std::fs::File;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 
@@ -108,7 +109,8 @@ impl Manager {
         let local_file = Path::new(entry_value);
 
         if !local_file.exists() {
-            todo!()
+            // Create an empty file
+            let _ = File::create(local_file)?;
         }
 
         Ok(())
